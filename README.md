@@ -11,7 +11,7 @@ A small self-hosted platform that watches your own applications and shows the wh
 ![Flask](https://img.shields.io/badge/flask-3.x-000000?logo=flask&logoColor=white)
 ![SQLite](https://img.shields.io/badge/sqlite-003B57?logo=sqlite&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
-[![Tests](https://github.com/YOUR_USERNAME/mini-devops-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/YOUR_USERNAME/mini-devops-dashboard/actions)
+[![Tests](https://github.com/modya2005/mini-devops-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/modya2005/mini-devops-dashboard/actions)
 
 <img src="docs/screenshots/dashboard.png" alt="Dashboard showing application health, response time chart, deployments, logs and environment" width="900">
 
