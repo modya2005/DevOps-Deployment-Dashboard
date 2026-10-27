@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Deployment Dashboard{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+{% block body %}
+<header class="top"><div class="wrap bar-row">
+  <a class="brand" href="{{ url_for('home') }}"><i></i>Deployment Dashboard</a>
+  <span class="chip" title="Environment">{{ env_name }}</span>
+  <span class="chip" title="Dashboard version">v{{ version }}</span>
+  <span class="live"><i id="liveDot"></i><span id="liveTxt">connecting</span></span>
+  <div class="actions">
+    <button class="btn" id="runAll" type="button">Run checks now</button>
+    <button class="btn primary" id="addBtn" type="button">Add application</button>
+    <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <button class="btn" type="submit" title="Signed in as {{ current_user }}">Sign out · {{ current_user }}</button>
+    </form>
+    <button class="iconbtn" id="theme" type="button" aria-label="Toggle theme" title="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+  <div class="grid">
+    <section class="panel s7">
+      <h2>Applications</h2>
+      <div class="scroll"><table class="tbl" id="apps">
+        <thead><tr><th>Application</th><th>Status</th><th>Latest</th><th>Uptime 24h</th><th>Recent checks</th><th>Last check</th></tr></thead>
+        <tbody></tbody></table></div>
+      <div class="empty" id="appsEmpty" hidden>No applications yet. Use “Add application” to start monitoring a URL you own.</div>
+    </section>
+
+    <section class="panel s5" id="detail">
+      <h2>Response time <span id="dName" class="dname"></span></h2>
+      <div class="tabs" id="winTabs" role="tablist" aria-label="Time window">
+        <button class="tab" role="tab" data-w="1h" aria-selected="true">1 hour</button>
+        <button class="tab" role="tab" data-w="24h" aria-selected="false">24 hours</button>
+        <button class="tab" role="tab" data-w="7d" aria-selected="false">7 days</button>
+      </div>
+      <div class="chartbox" id="chartBox"><canvas id="chart" height="210" aria-label="Response time chart" role="img"></canvas></div>
+      <div class="uptimes" id="uptimes"></div>
+      <div class="rowbtns">
+        <button class="btn sm" id="pauseBtn" type="button">Pause checks</button>
+        <button class="btn sm danger" id="delBtn" type="button">Remove</button>
+      </div>
+    </section>
+
+    <section class="panel s6">
+      <h2>GitHub <span id="ghName" class="dname"></span></h2>
+      <div id="github"></div>
+    </section>
+
+    <section class="panel s6">
+      <h2>Deployment history <button class="btn sm" id="depBtn" type="button">Record deployment</button></h2>
+      <div class="scroll"><table class="tbl" id="deps">
+        <thead><tr><th>Version</th><th>App</th><th>Commit</th><th>Outcome</th><th>When</th></tr></thead><tbody></tbody></table></div>
+      <div class="empty" id="depsEmpty" hidden>No deployments recorded. Post one from CI (see README) or use the button above.</div>
+    </section>
+
+    <section class="panel s8">
+      <h2>Logs</h2>
+      <div class="logtools">
+        <input type="search" id="logq" placeholder="Search logs, e.g. timeout" aria-label="Search logs">
+        <select id="loglv" aria-label="Filter by level"><option value="">All levels</option><option>INFO</option><option>WARN</option><option>ERROR</option></select>
+      </div>
+      <div class="logs" id="logs"></div>
+    </section>
+
+    <section class="panel s4">
+      <h2>Environment</h2>
+      <dl class="dl" id="env"></dl>
+      <div class="res" id="res"></div>
+      <p class="note">CPU and memory are read with psutil from the machine running this dashboard.</p>
+    </section>
+  </div>
+
+  <section class="panel rules">
+    <h2>How status and uptime are calculated</h2>
+    <ul>
+      <li><b>Healthy</b> means the last check returned the expected status within the timeout and under the slow threshold. <b>Degraded</b> is one failed check, <b>Down</b> is two in a row.</li>
+      <li><b>Uptime</b> = successful checks ÷ total checks × 100 for the window. Timeouts count as failures. Paused apps (maintenance) are not checked and not counted.</li>
+      <li>Only add systems you own or have permission to monitor.</li>
+    </ul>
+  </section>
+  <footer>Mini DevOps Deployment Dashboard · Git → Build → Deploy → Monitor</footer>
+</main>
+
+<dialog id="addDlg"><form method="dialog" id="addForm">
+  <h3>Add application</h3>
+  <label for="fName">Name</label><input id="fName" required maxlength="60" placeholder="Job Tracker">
+  <label for="fUrl">Health URL</label><input id="fUrl" required type="url" placeholder="https://myapp.example.com/health">
+  <div class="two"><div><label for="fInt">Check every (seconds)</label><input id="fInt" type="number" min="5" max="86400" value="30"></div>
+  <div><label for="fExp">Expected status</label><input id="fExp" type="number" min="100" max="599" value="200"></div></div>
+  <label for="fRepo">GitHub repository <span class="sub">(optional)</span></label><input id="fRepo" placeholder="owner/name">
+  <p class="err" id="addErr" hidden></p>
+  <div class="dlg-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="submit">Add and check</button></div>
+</form></dialog>
+
+<dialog id="depDlg"><form method="dialog" id="depForm">
+  <h3>Record deployment</h3>
+  <label for="dApp">Application</label><select id="dApp"></select>
+  <div class="two"><div><label for="dVer">Version</label><input id="dVer" required placeholder="v1.4.2"></div>
+  <div><label for="dSha">Commit SHA</label><input id="dSha" required placeholder="a3f91c2" pattern="[0-9a-fA-F]{7,40}"></div></div>
+  <label for="dStatus">Outcome</label><select id="dStatus"><option value="success">Success</option><option value="failed">Failed</option></select>
+  <label for="dTok">Deploy token <span class="sub">(only if DEPLOY_TOKEN is set)</span></label><input id="dTok" type="password" autocomplete="off">
+  <p class="err" id="depErr" hidden></p>
+  <div class="dlg-actions"><button class="btn" type="button" data-close>Cancel</button><button class="btn primary" type="submit">Save</button></div>
+</form></dialog>
+{% endblock %}

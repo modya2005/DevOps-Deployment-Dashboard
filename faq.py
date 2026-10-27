@@ -1,0 +1,36 @@
+"""FAQ content for the home page. Answers are trusted HTML written here, not user input."""
+
+CATEGORIES = ["Basics", "Monitoring", "Deployments", "Setup & security"]
+
+FAQS = [
+    {"id": "what-is-it", "cat": "Basics", "q": "What is the Deployment Dashboard?",
+     "a": "<p>A small platform that monitors your own applications and shows the path <b>Git → Build → Deploy → Monitor</b> in one place: health, response times, uptime, deployment history tied to commit SHAs, GitHub activity, logs and environment details.</p>"},
+    {"id": "real-data", "cat": "Basics", "q": "Is the data on the dashboard real or sample data?",
+     "a": "<p>Everything shown comes from checks the dashboard has actually made. On first run it registers five demo targets that it serves itself (<code>/health</code>, <code>/demo/ok</code>, <code>/demo/slow</code>, <code>/demo/flaky</code>, <code>/demo/down</code>). Those are real HTTP requests to local endpoints, so you can watch success, slow responses and failures straight away.</p><p>Remove them from the dashboard, or set <code>SEED_DEMO=0</code>, once you add your own applications.</p>"},
+    {"id": "who-can-sign-in", "cat": "Basics", "q": "Who can sign in, and how do I create an account?",
+     "a": "<p>The first person to open the sign-in page creates the owner account. After that, sign-up is closed so strangers cannot register. To let more people register, set <code>ALLOW_SIGNUP=1</code> in the environment and restart.</p>"},
+    {"id": "check-frequency", "cat": "Monitoring", "q": "How often are checks run?",
+     "a": "<p>Each application has its own interval, from 5 seconds to 24 hours (default 30 seconds). A scheduler running inside the app requests the URL, then stores the status code, response time and any error with a timestamp. You can also press <b>Run checks now</b> on the dashboard.</p>"},
+    {"id": "status-meanings", "cat": "Monitoring", "q": "What do Healthy, Slow, Degraded and Down mean?",
+     "a": "<p>Status is worked out from the stored checks, never typed in by hand.</p><p><b>Healthy</b>: the last check returned the expected status code within the timeout and under the slow threshold (500 ms by default). <b>Slow</b>: it passed but took longer than the threshold. <b>Degraded</b>: the last check failed once. <b>Down</b>: the last two checks in a row failed. <b>Paused</b>: checks are switched off for maintenance.</p>"},
+    {"id": "uptime", "cat": "Monitoring", "q": "How is uptime calculated?",
+     "a": "<p><code>uptime % = successful checks ÷ total checks × 100</code> over 1 hour, 24 hours or 7 days. Timeouts and connection errors count as failures. Paused apps are not checked and not counted. If a window has no checks yet, the dashboard shows a dash instead of an invented 100%.</p>"},
+    {"id": "maintenance", "cat": "Monitoring", "q": "How do I avoid false alarms during maintenance?",
+     "a": "<p>Select the application and press <b>Pause checks</b>. No requests are made while it is paused and nothing is counted against uptime. Press <b>Resume checks</b> when you are done. Both actions are written to the log.</p>"},
+    {"id": "own-systems", "cat": "Monitoring", "q": "Can I monitor any website?",
+     "a": "<p>Only monitor systems you own or have permission to check. Health checks are real requests, and repeated requests to someone else's service can be unwelcome or against their terms. Only <code>http://</code> and <code>https://</code> URLs are accepted.</p>"},
+    {"id": "cpu-memory", "cat": "Monitoring", "q": "Why do CPU and memory show the dashboard's machine, not my app's?",
+     "a": "<p>An HTTP request cannot reveal another server's resource usage. The Environment panel reads CPU, memory and disk with <code>psutil</code> from the machine or container running the dashboard. To track another host, run a dashboard instance there.</p>"},
+    {"id": "record-deployment", "cat": "Deployments", "q": "How do I record a deployment from CI?",
+     "a": "<p>Call the API after your deploy step. Set <code>DEPLOY_TOKEN</code> on the dashboard and keep the same value in your repository secrets.</p><pre>python scripts/record_deploy.py \\\n  --url https://your-dashboard --app \"Job Tracker\" \\\n  --version v1.4.2 --sha \"$GITHUB_SHA\" --status success</pre><p>Each record stores the version, commit SHA, outcome and time, and writes a log line. You can also use the <b>Record deployment</b> button on the dashboard.</p>"},
+    {"id": "github", "cat": "Deployments", "q": "How does the GitHub integration work?",
+     "a": "<p>Add a repository as <code>owner/name</code> when registering an application. The dashboard then uses the GitHub REST API to show the default branch, other branches, the latest commits and recent GitHub Actions runs. Responses are cached for a minute.</p><p>A <code>GITHUB_TOKEN</code> is optional. Without one you get 60 requests an hour and public repositories only. With one you get 5,000 an hour and private repositories. The token stays in the environment and is never sent to the browser.</p>"},
+    {"id": "storage", "cat": "Setup & security", "q": "Where is my data stored, and for how long?",
+     "a": "<p>In a local SQLite file (<code>instance/dashboard.db</code>, or <code>/data</code> in Docker). Checks and logs older than 30 days are deleted automatically. Change this with <code>RETENTION_DAYS</code>.</p>"},
+    {"id": "security", "cat": "Setup & security", "q": "How are passwords and sessions protected?",
+     "a": "<p>Passwords are stored as salted PBKDF2 hashes, never in plain text. Sessions use signed, HttpOnly, SameSite cookies. Forms carry a CSRF token, state-changing API requests from other origins are rejected, and repeated failed sign-ins from one address are rate limited. When you serve the dashboard over HTTPS, set <code>SECURE_COOKIES=1</code>.</p>"},
+    {"id": "forgot-password", "cat": "Setup & security", "q": "I forgot my password. How do I reset it?",
+     "a": "<p>There is no email reset because the app has no mail service. If you can reach the server, run this and enter a new password:</p><pre>python scripts/reset_password.py your-username</pre><p>In Docker, run it inside the container with <code>docker compose exec dashboard python scripts/reset_password.py your-username</code>.</p>"},
+    {"id": "deploy-it", "cat": "Setup & security", "q": "How do I run or deploy the dashboard itself?",
+     "a": "<p>Locally: <code>pip install -r requirements.txt</code>, then <code>python app.py</code>. With Docker: <code>docker compose up --build</code>. Run a single worker, because the scheduler lives inside the web process. Keep secrets in <code>.env</code> or your host's secret store and never commit them.</p>"},
+]

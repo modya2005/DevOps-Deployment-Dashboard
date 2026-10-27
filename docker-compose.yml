@@ -1,0 +1,10 @@
+services:
+  dashboard:
+    build: .
+    ports: ["5000:5000"]
+    env_file: [.env]
+    environment:
+      DATABASE: /data/dashboard.db
+    volumes: ["dashboard-data:/data"]
+volumes:
+  dashboard-data:
